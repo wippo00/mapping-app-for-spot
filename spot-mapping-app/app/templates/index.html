@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1, viewport-fit=cover"
+    >
+    <title>Spot Mapping App</title>
+
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    >
+
+    <style>
+        :root {
+            --bg: #edf2ee;
+            --surface: #ffffff;
+            --surface-soft: #f7faf8;
+            --primary: #173f32;
+            --primary-light: #2b6651;
+            --accent: #2f8a68;
+            --danger: #be3c3c;
+            --text: #17211d;
+            --muted: #64726b;
+            --border: #d9e2dc;
+            --shadow: 0 8px 25px rgba(23, 63, 50, 0.10);
+            --radius: 16px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            margin: 0;
+            width: 100%;
+            height: 100dvh;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            font-family:
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                Roboto,
+                Arial,
+                sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        .app-header {
+            flex: 0 0 auto;
+            padding:
+                max(16px, env(safe-area-inset-top))
+                18px
+                18px;
+            background: linear-gradient(135deg, #123126, #245c47);
+            color: white;
+            box-shadow: 0 3px 14px rgba(0, 0, 0, 0.15);
+        }
+
+        .header-row {
+            max-width: 1250px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-icon {
+            width: 68px;
+            height: 46px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex: 0 0 auto;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.13);
+            padding: 5px;
+        }
+
+        .brand-icon img {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .brand h1 {
+            margin: 0;
+            font-size: 20px;
+        }
+
+        .brand p {
+            margin: 3px 0 0;
+            color: rgba(255, 255, 255, 0.76);
+            font-size: 12px;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .settings-link,
+        .logout-form button {
+            border: 0;
+            border-radius: 999px;
+            min-height: 36px;
+            color: #e7fff0;
+            background: rgba(12, 26, 20, 0.28);
+            font-size: 12px;
+            font-weight: 750;
+            text-decoration: none;
+        }
+
+        .settings-link {
+            max-width: 138px;
+            padding: 0 13px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            line-height: 1;
+        }
+
+        .logout-form {
+            margin: 0;
+        }
+
+        .logout-form button {
+            padding: 0 13px;
+            cursor: pointer;
+        }
+
+        main {
+            width: 100%;
+            max-width: 1440px;
+            flex: 1 1 auto;
+            min-height: 0;
+            margin: 0 auto;
+            padding: 16px 14px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .status-card {
+            flex: 0 0 auto;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-bottom: 14px;
+            padding: 13px 14px;
+            background: #eff8f2;
+            border: 1px solid #cfe3d4;
+            border-radius: 14px;
+            color: #20523d;
+            font-size: 13px;
+            font-weight: 650;
+            line-height: 1.35;
+        }
+
+        .status-card.error {
+            background: #fff1f1;
+            border-color: #e6b8b8;
+            color: #8f2f2f;
+        }
+
+        .status-card.warning {
+            background: #fff8e8;
+            border-color: #f0c780;
+            color: #8a4b00;
+        }
+
+        .workspace {
+            flex: 1 1 auto;
+            min-height: 0;
+            display: grid;
+            grid-template-columns: minmax(300px, 360px) minmax(0, 1fr);
+            gap: 16px;
+            align-items: stretch;
+            overflow: hidden;
+        }
+
+        .side-panel {
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            overflow: hidden;
+        }
+
+        .mission-panel,
+        .map-panel,
+        .messages-panel {
+            overflow: hidden;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+        }
+
+        .mission-panel {
+            flex: 0 0 auto;
+            padding: 14px;
+        }
+
+        .panel-heading {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .panel-heading-icon {
+            width: 30px;
+            height: 30px;
+            display: grid;
+            place-items: center;
+            border-radius: 10px;
+            background: #e8f3ec;
+            font-size: 16px;
+        }
+
+        .panel-heading h2 {
+            margin: 0;
+            font-size: 16px;
+        }
+
+        .panel-heading p {
+            margin: 2px 0 0;
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .field {
+            margin-bottom: 12px;
+        }
+
+        .field-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 6px;
+        }
+
+        .field label {
+            font-size: 13px;
+            font-weight: 750;
+        }
+
+        .value-badge {
+            min-width: 52px;
+            padding: 5px 8px;
+            border-radius: 8px;
+            background: #e7f3eb;
+            color: var(--primary);
+            text-align: center;
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 7px;
+            appearance: none;
+            -webkit-appearance: none;
+            border-radius: 999px;
+            outline: none;
+            background: #d7e3da;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            width: 22px;
+            height: 22px;
+            appearance: none;
+            -webkit-appearance: none;
+            border: 3px solid white;
+            border-radius: 50%;
+            background: var(--accent);
+            box-shadow: 0 2px 7px rgba(30, 75, 56, 0.25);
+            cursor: pointer;
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border: 3px solid white;
+            border-radius: 50%;
+            background: var(--accent);
+            box-shadow: 0 2px 7px rgba(30, 75, 56, 0.25);
+            cursor: pointer;
+        }
+
+        .mission-name-input {
+            width: 100%;
+            min-height: 42px;
+            padding: 9px 10px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text);
+            background: white;
+            font: inherit;
+            font-size: 14px;
+        }
+
+        input:disabled {
+            opacity: 0.55;
+        }
+
+        .range-scale {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 4px;
+            color: var(--muted);
+            font-size: 11px;
+        }
+
+        .hint {
+            margin: 4px 0 0;
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+        .mission-panel .hint {
+            display: none;
+        }
+
+        .position-mode {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .position-mode button {
+            min-height: 38px;
+            border: 0;
+            border-radius: 10px;
+            padding: 8px 10px;
+            color: var(--primary);
+            background: #e8f3ec;
+            font-size: 12px;
+            font-weight: 850;
+            cursor: pointer;
+        }
+
+        .position-mode button.active {
+            color: white;
+            background: var(--primary);
+        }
+
+        .position-mode button:disabled {
+            cursor: not-allowed;
+            opacity: 0.55;
+        }
+
+        .position-mode-status {
+            display: block;
+            margin-top: 6px;
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.35;
+        }
+
+        .map-position-control {
+            min-width: 280px;
+            max-width: 390px;
+        }
+
+        .map-position-control .position-mode {
+            grid-template-columns: minmax(84px, 1fr) minmax(130px, 1.25fr);
+        }
+
+        .map-position-control .position-mode-status {
+            text-align: right;
+        }
+
+        .action-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        button {
+            min-height: 42px;
+            padding: 9px 10px;
+            border: 0;
+            border-radius: 12px;
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 750;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+
+        button:disabled {
+            cursor: not-allowed;
+            opacity: 0.55;
+        }
+
+        button:active:not(:disabled) {
+            transform: scale(0.98);
+        }
+
+        .btn-primary {
+            color: white;
+            background: linear-gradient(135deg, #1d6b4c, #338d69);
+            box-shadow: 0 6px 14px rgba(31, 109, 77, 0.22);
+        }
+
+        .btn-secondary {
+            color: #244b3b;
+            background: #e8f1eb;
+        }
+
+        .btn-danger {
+            color: white;
+            background: linear-gradient(135deg, #b23b3b, #dc5a4f);
+        }
+
+        #sendMissionButton {
+            grid-column: 1 / -1;
+        }
+
+        #abortButton {
+            display: none;
+        }
+
+        .map-panel {
+            position: relative;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .map-header {
+            flex: 0 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .map-header h2 {
+            margin: 0;
+            font-size: 16px;
+        }
+
+        .map-header span {
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        #map {
+            flex: 1 1 auto;
+            width: 100%;
+            height: auto;
+            min-height: 0;
+            z-index: 0;
+        }
+
+        .map-footer {
+            flex: 0 0 auto;
+            padding: 10px 14px;
+            background: var(--surface-soft);
+            border-top: 1px solid var(--border);
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.35;
+        }
+
+        .messages-panel {
+            flex: 1 1 auto;
+            min-height: 0;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .messages-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+
+        .messages-header h2 {
+            margin: 0;
+            font-size: 16px;
+        }
+
+        #spotMessagesStatus {
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        #spotMessagesList {
+            flex: 1 1 auto;
+            min-height: 0;
+            display: grid;
+            align-content: start;
+            gap: 8px;
+            max-height: none;
+            overflow-y: auto;
+            font-size: 13px;
+        }
+
+        .spot-message {
+            padding: 9px 10px;
+            border-left: 4px solid #2563eb;
+            background: #f8fafc;
+            line-height: 1.35;
+        }
+
+        .spot-message.warning {
+            border-left-color: #d97706;
+        }
+
+        .spot-message strong {
+            display: block;
+            margin-bottom: 3px;
+        }
+
+        .spot-message small {
+            display: block;
+            margin-bottom: 4px;
+            color: #68766f;
+        }
+
+        .leaflet-control-layers {
+            border: 0 !important;
+            border-radius: 12px !important;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.16) !important;
+        }
+
+        .mobile-dock {
+            display: none;
+        }
+
+        @media (max-width: 820px) {
+            :root {
+                --mobile-header-height: calc(66px + env(safe-area-inset-top));
+                --mobile-dock-base-height: calc(136px + env(safe-area-inset-bottom));
+                --mobile-dock-height: var(--mobile-dock-base-height);
+                --mobile-panel-gap: 10px;
+            }
+
+            html,
+            body {
+                width: 100%;
+                height: 100dvh;
+                overflow: hidden;
+            }
+
+            body {
+                min-height: 0;
+                padding-bottom: 0;
+            }
+
+            .app-header {
+                height: var(--mobile-header-height);
+                padding:
+                    calc(10px + env(safe-area-inset-top))
+                    14px
+                    12px;
+            }
+
+            .brand {
+                gap: 9px;
+            }
+
+            .brand-icon {
+                width: 56px;
+                height: 40px;
+                border-radius: 12px;
+                padding: 4px;
+            }
+
+            .brand h1 {
+                font-size: 17px;
+            }
+
+            .brand p {
+                margin-top: 1px;
+                font-size: 11px;
+            }
+
+            main {
+                position: fixed;
+                top: var(--mobile-header-height);
+                right: 0;
+                bottom: var(--mobile-dock-height);
+                left: 0;
+                width: 100%;
+                max-width: none;
+                height: auto;
+                margin: 0;
+                padding: 10px 8px 0;
+                display: flex;
+                flex-direction: column;
+                overflow: hidden;
+            }
+
+            .status-card {
+                flex: 0 0 auto;
+                min-height: 38px;
+                max-height: 48px;
+                margin-bottom: 8px;
+                padding: 9px 11px;
+                border-radius: 13px;
+                font-size: 12px;
+                overflow: hidden;
+            }
+
+            .workspace {
+                flex: 1 1 auto;
+                display: block;
+                min-height: 0;
+                overflow: hidden;
+            }
+
+            .side-panel {
+                display: contents;
+            }
+
+            .mission-panel {
+                display: none;
+                position: fixed;
+                z-index: 4000;
+                left: 10px;
+                right: 10px;
+                bottom: calc(var(--mobile-dock-height) + var(--mobile-panel-gap));
+                max-height: min(
+                    44vh,
+                    calc(
+                        100dvh -
+                        var(--mobile-header-height) -
+                        var(--mobile-dock-height) -
+                        28px
+                    )
+                );
+                overflow-y: auto;
+                padding: 14px 16px;
+                border-radius: 18px;
+                box-shadow: 0 -8px 28px rgba(0, 0, 0, 0.20);
+            }
+
+            body.mobile-params-open .mission-panel {
+                display: block;
+            }
+
+            body.mission-active .mission-panel {
+                display: none;
+            }
+
+            .mission-panel .panel-heading,
+            .mission-panel .hint,
+            .mission-panel #sendMissionButton,
+            .mission-panel #historyButton,
+            .mission-panel #abortButton {
+                display: none;
+            }
+
+            .mission-panel .field {
+                margin-bottom: 11px;
+            }
+
+            .mission-panel .field-head {
+                margin-bottom: 5px;
+            }
+
+            .mission-panel .range-scale {
+                margin-top: 3px;
+            }
+
+            .mission-panel .action-grid {
+                display: block;
+                margin-top: 10px;
+            }
+
+            .mission-panel #clearAreaButton {
+                width: 100%;
+                min-height: 44px;
+            }
+
+            .map-panel {
+                height: 100%;
+                min-height: 0;
+                display: flex;
+                flex-direction: column;
+                overflow: hidden;
+                border-radius: 16px;
+            }
+
+            .map-header {
+                flex: 0 0 auto;
+                min-height: 66px;
+                padding: 10px 12px;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .map-header h2 {
+                font-size: 15px;
+            }
+
+            .map-header span {
+                font-size: 11px;
+            }
+
+            .map-header > div > span {
+                display: none;
+            }
+
+            .map-position-control {
+                min-width: 210px;
+                max-width: 260px;
+            }
+
+            .map-position-control .position-mode {
+                gap: 6px;
+                grid-template-columns: 0.88fr 1.12fr;
+            }
+
+            .map-position-control .position-mode button {
+                min-height: 36px;
+                padding: 7px 8px;
+                font-size: 11px;
+            }
+
+            .map-position-control .position-mode-status {
+                max-width: 250px;
+                overflow: hidden;
+                text-align: right;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            #map {
+                flex: 1 1 auto;
+                height: auto;
+                min-height: 0;
+            }
+
+            .map-footer,
+            .messages-panel {
+                display: none;
+            }
+
+            .mobile-dock {
+                position: fixed;
+                z-index: 5000;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                grid-template-rows: auto 56px;
+                gap: 8px;
+                min-height: var(--mobile-dock-base-height);
+                height: auto;
+                padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
+                background: rgba(255, 255, 255, 0.98);
+                border-top: 1px solid var(--border);
+                box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.16);
+            }
+
+            .mobile-dock-top {
+                grid-column: 1 / -1;
+                min-width: 0;
+                min-height: 54px;
+            }
+
+            .mobile-dock-top button {
+                width: 100%;
+                min-height: 54px;
+                color: white;
+                background: #174f3b;
+                font-size: 13px;
+            }
+
+            .dock-notification {
+                min-height: 54px;
+                height: auto;
+                padding: 8px 12px;
+                border: 1px solid #cfe3d4;
+                border-radius: 15px;
+                color: #1f513c;
+                background: #eef8f1;
+            }
+
+            .dock-notification.warning {
+                color: #8a4b00;
+                background: #fff8e8;
+                border-color: #f0c780;
+            }
+
+            .dock-notification-title {
+                margin-bottom: 3px;
+                font-size: 10px;
+                font-weight: 850;
+                letter-spacing: 0.4px;
+                opacity: 0.75;
+            }
+
+            .dock-notification-text {
+                display: -webkit-box;
+                overflow: hidden;
+                font-size: 12px;
+                font-weight: 750;
+                line-height: 1.25;
+                -webkit-box-orient: vertical;
+                -webkit-line-clamp: 3;
+            }
+
+            .mobile-dock > button {
+                min-width: 0;
+                min-height: 56px;
+                color: #244b3b;
+                background: #e8f1eb;
+                font-size: 11px;
+                line-height: 1.1;
+            }
+
+            .mobile-dock > button span {
+                display: block;
+                margin-bottom: 3px;
+                font-size: 17px;
+            }
+
+            #dockActionButton.start {
+                color: white;
+                background: linear-gradient(135deg, #1d6b4c, #338d69);
+            }
+
+            #dockActionButton.abort {
+                color: white;
+                background: linear-gradient(135deg, #b23b3b, #dc5a4f);
+            }
+        }
+
+        @media (max-width: 460px) {
+            .brand p {
+                max-width: 190px;
+            }
+
+            .header-actions {
+                gap: 7px;
+            }
+
+            .settings-link,
+            .logout-form button {
+                min-height: 34px;
+            }
+
+            .settings-link {
+                max-width: 82px;
+                padding: 0 11px;
+            }
+        }
+    </style>
+</head>
+
+<body data-user-id="{{ current_user.id }}">
+    <header class="app-header">
+        <div class="header-row">
+            <div class="brand">
+                <div class="brand-icon">
+                    <img src="/static/img/spot-logo.png?v=20260624" alt="Spot robot">
+                </div>
+                <div>
+                    <h1>Spot Mapping</h1>
+                    <p>Pianificazione missioni LiDAR</p>
+                </div>
+            </div>
+
+            <div class="header-actions">
+                <a
+                    class="settings-link"
+                    href="{{ '/admin/users' if current_user.role in ['admin', 'subadmin'] else '/account' }}"
+                    aria-label="Account {{ current_user.username }}"
+                    title="{{ current_user.username }}"
+                >
+                    {{ current_user.username }}
+                </a>
+                <form class="logout-form" method="post" action="/logout">
+                    <button type="submit">Esci</button>
+                </form>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div id="message" class="status-card">
+            <span id="messageIcon">i</span>
+            <span id="messageText">Richiesta autorizzazione GPS in corso...</span>
+        </div>
+
+        <div class="workspace">
+            <div class="side-panel">
+                <section class="mission-panel" aria-label="Parametri missione">
+                    <div class="panel-heading">
+                        <div class="panel-heading-icon">cfg</div>
+                        <div>
+                            <h2>Parametri missione</h2>
+                            <p>Configura l'area da mappare</p>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <div class="field-head">
+                            <label for="missionName">Nome missione</label>
+                        </div>
+
+                        <input
+                            id="missionName"
+                            class="mission-name-input"
+                            type="text"
+                            maxlength="80"
+                            placeholder="Es. Rilievo campo nord"
+                            required
+                        >
+                    </div>
+
+                    <div class="field">
+                        <div class="field-head">
+                            <label for="cellSize">Dimensione celle</label>
+                            <span id="cellSizeValue" class="value-badge">2 m</span>
+                        </div>
+
+                        <input
+                            id="cellSize"
+                            type="range"
+                            min="0.5"
+                            max="10"
+                            step="0.5"
+                            value="2"
+                        >
+
+                        <div class="range-scale">
+                            <span>0,5 m</span>
+                            <span>10 m</span>
+                        </div>
+
+                        <p class="hint">
+                            Definisce la discretizzazione dell'area selezionata.
+                        </p>
+                    </div>
+
+                    <div class="field">
+                        <div class="field-head">
+                            <label for="gridRotation">Rotazione griglia</label>
+                            <span id="gridRotationValue" class="value-badge">0°</span>
+                        </div>
+
+                        <input
+                            id="gridRotation"
+                            type="range"
+                            min="0"
+                            max="180"
+                            step="1"
+                            value="0"
+                        >
+
+                        <div class="range-scale">
+                            <span>0°</span>
+                            <span>180°</span>
+                        </div>
+
+                        <p class="hint">
+                            Allinea la griglia a sentieri, confini o direzione desiderata.
+                        </p>
+                    </div>
+
+                    <div class="action-grid">
+                        <button id="sendMissionButton" class="btn-primary">
+                            Invia missione
+                        </button>
+
+                        <button id="clearAreaButton" class="btn-secondary">
+                            Cancella area
+                        </button>
+
+                        <button id="historyButton" class="btn-secondary">
+                            Storico missioni
+                        </button>
+
+                        <button id="abortButton" class="btn-danger" disabled>
+                            Abort missione
+                        </button>
+                    </div>
+                </section>
+
+                <section id="messagesPanel" class="messages-panel">
+                    <div class="messages-header">
+                        <h2>Messaggi Spot</h2>
+                        <span id="spotMessagesStatus">Nessuna missione attiva.</span>
+                    </div>
+                    <div id="spotMessagesList"></div>
+                </section>
+            </div>
+
+            <section class="map-panel">
+                <div class="map-header">
+                    <div>
+                        <h2>Area di mappatura</h2>
+                        <span>Seleziona i vertici toccando la mappa</span>
+                    </div>
+
+                    <div class="map-position-control">
+                        <div class="position-mode" aria-label="Posizione di partenza">
+                            <button
+                                id="positionGpsButton"
+                                type="button"
+                                class="active"
+                            >
+                                Usa GPS
+                            </button>
+                            <button
+                                id="positionManualButton"
+                                type="button"
+                            >
+                                Scegli sulla mappa
+                            </button>
+                        </div>
+
+                        <span id="positionModeStatus" class="position-mode-status">
+                            Posizione aggiornata dal GPS.
+                        </span>
+                    </div>
+                </div>
+
+                <div id="map"></div>
+
+                <div class="map-footer">
+                    Tocca almeno tre punti per delimitare il perimetro. La griglia
+                    viene aggiornata automaticamente.
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <nav id="mobileDock" class="mobile-dock" aria-label="Navigazione mobile">
+        <div id="mobileDockTop" class="mobile-dock-top"></div>
+
+        <button id="dockMessagesButton" class="btn-secondary">
+            Messaggi
+        </button>
+
+        <button id="dockActionButton" class="start">
+            Inizia
+        </button>
+
+        <button id="dockHistoryButton" class="btn-secondary">
+            Storico
+        </button>
+    </nav>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="/static/js/map.js?v=20260625-roles"></script>
+</body>
+</html>

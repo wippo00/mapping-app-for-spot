@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Gestione account - Spot Mapping App</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+            background: #edf2ee;
+            color: #17211d;
+        }
+
+        header {
+            padding: 20px 28px;
+            color: white;
+            background: linear-gradient(135deg, #123126, #245c47);
+        }
+
+        header h1 {
+            margin: 0 0 6px;
+            font-size: 30px;
+            line-height: 1.08;
+        }
+
+        header p {
+            margin: 0;
+            color: rgba(255, 255, 255, 0.78);
+        }
+
+        main {
+            max-width: 1240px;
+            margin: 0 auto;
+            padding: 22px;
+        }
+
+        a {
+            color: #1e3a2d;
+            font-weight: 850;
+            text-decoration: none;
+        }
+
+        .top-actions,
+        .top-action-buttons,
+        .row-actions,
+        .inline-actions,
+        .panel-title-row,
+        .filter-inline {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .top-actions {
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .top-action-buttons {
+            justify-content: flex-end;
+        }
+
+        .button-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 40px;
+            border-radius: 8px;
+            padding: 8px 12px;
+            color: white;
+            background: #2f8a68;
+        }
+
+        .button-link.secondary,
+        button.secondary {
+            color: #244b3b;
+            background: #e8f1eb;
+        }
+
+        .user-chip {
+            pointer-events: none;
+        }
+
+        .logout-form {
+            margin: 0;
+        }
+
+        .panel {
+            margin-bottom: 18px;
+            padding: 16px;
+            border: 1px solid #d9e2dc;
+            border-radius: 12px;
+            background: white;
+            box-shadow: 0 8px 25px rgba(23, 63, 50, 0.08);
+        }
+
+        .panel h2 {
+            margin: 0 0 14px;
+            font-size: 24px;
+            line-height: 1.1;
+        }
+
+        .panel-title-row {
+            justify-content: space-between;
+            margin-bottom: 14px;
+        }
+
+        .panel-title-row h2 {
+            margin: 0;
+        }
+
+        .subsection {
+            margin-top: 24px;
+            padding-top: 18px;
+            border-top: 1px solid #e1e9e4;
+        }
+
+        .subsection h2,
+        .subsection h3 {
+            margin: 0 0 14px;
+            color: #1e3a2d;
+            line-height: 1.15;
+        }
+
+        .subsection h3 {
+            font-size: 18px;
+        }
+
+        .create-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(150px, 1fr)) auto;
+            gap: 10px;
+            align-items: end;
+            margin-bottom: 14px;
+        }
+
+        .filter-inline {
+            justify-content: flex-end;
+        }
+
+        .filter-inline select {
+            width: min(250px, 100%);
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 13px;
+            font-weight: 850;
+            color: #244b3b;
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+        }
+
+        input,
+        select {
+            width: 100%;
+            min-height: 40px;
+            padding: 8px 10px;
+            border: 1px solid #cfd9d3;
+            border-radius: 8px;
+            font-size: 15px;
+        }
+
+        button {
+            min-height: 40px;
+            border: 0;
+            border-radius: 8px;
+            padding: 8px 12px;
+            color: white;
+            background: #2f8a68;
+            font-weight: 850;
+            cursor: pointer;
+        }
+
+        button.danger {
+            background: #be3c3c;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        th,
+        td {
+            padding: 10px;
+            border: 1px solid #d5ddd8;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        th {
+            background: #e5eee8;
+            color: #1e3a2d;
+        }
+
+        .empty-row {
+            color: #617168;
+            font-weight: 750;
+        }
+
+        .password-form {
+            display: flex;
+            gap: 8px;
+            min-width: 245px;
+        }
+
+        .password-form input {
+            min-height: 38px;
+        }
+
+        .current-password-form {
+            display: grid;
+            grid-template-columns:
+                repeat(3, minmax(160px, 1fr))
+                auto;
+            gap: 10px;
+            align-items: end;
+            margin-top: 14px;
+            padding-top: 14px;
+            border-top: 1px solid #e1e9e4;
+        }
+
+        .current-password-form h3 {
+            grid-column: 1 / -1;
+            margin: 0;
+            font-size: 18px;
+            line-height: 1.2;
+            color: #1e3a2d;
+        }
+
+        .notice {
+            margin-bottom: 14px;
+            padding: 12px;
+            border-radius: 10px;
+        }
+
+        .notice.error {
+            color: #8f2f2f;
+            background: #fff1f1;
+            border: 1px solid #e6b8b8;
+        }
+
+        .notice.success {
+            color: #20523d;
+            background: #eff8f2;
+            border: 1px solid #cfe3d4;
+        }
+
+        .scope-note {
+            margin: 0 0 12px;
+            color: #617168;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .icon-refresh {
+            width: 40px;
+            min-width: 40px;
+            min-height: 40px;
+            padding: 0;
+            border-radius: 50%;
+            color: #244b3b;
+            background: #e8f1eb;
+            font-size: 20px;
+            line-height: 1;
+        }
+
+        .icon-refresh.loading {
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @media (max-width: 900px) {
+            header {
+                padding: 18px 22px;
+            }
+
+            main {
+                padding: 16px 14px;
+            }
+
+            .create-grid,
+            .current-password-form {
+                grid-template-columns: 1fr;
+            }
+
+            .top-actions,
+            .top-action-buttons,
+            .panel-title-row,
+            .filter-inline {
+                align-items: stretch;
+                flex-direction: column;
+            }
+
+            .filter-inline select {
+                width: 100%;
+            }
+
+            table {
+                display: block;
+                overflow-x: auto;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>{{ "Pannello admin" if is_global_admin else "Pannello subadmin" }}</h1>
+        <p>
+            {% if is_global_admin %}
+                Gestione globale di dipartimenti, città, subadmin e utenti.
+            {% else %}
+                Gestione utenti e richieste per {{ current_user.department }} / {{ current_user.city }}.
+            {% endif %}
+        </p>
+    </header>
+
+    <main>
+        <div class="top-actions">
+            {% if is_global_admin %}
+                <span></span>
+            {% else %}
+                <a href="/">← Torna alla mappa</a>
+            {% endif %}
+            <div class="top-action-buttons">
+                <span class="button-link secondary user-chip">
+                    {{ current_user.username }} · {{ role_labels.get(current_user.role, current_user.role) }}
+                </span>
+                <form class="logout-form" method="post" action="/logout">
+                    <button class="secondary" type="submit">Esci</button>
+                </form>
+            </div>
+        </div>
+
+        {% if error %}
+            <div class="notice error">{{ error }}</div>
+        {% endif %}
+
+        {% if success %}
+            <div class="notice success">{{ success }}</div>
+        {% endif %}
+
+        <section class="panel">
+            <h2>Account corrente</h2>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Username</th>
+                        <th>Ruolo</th>
+                        <th>Dipartimento</th>
+                        <th>Città</th>
+                        <th>Stato</th>
+                        <th>Creato</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if current_admin %}
+                        <tr>
+                            <td>{{ current_admin.id }}</td>
+                            <td>{{ current_admin.username }}</td>
+                            <td>{{ role_labels.get(current_admin.role, current_admin.role) }}</td>
+                            <td>{{ current_admin.department or "-" }}</td>
+                            <td>{{ current_admin.city or "-" }}</td>
+                            <td>{{ "Attivo" if current_admin.active else "Disattivo" }}</td>
+                            <td>{{ current_admin.created_at.replace("T", " ") }}</td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td class="empty-row" colspan="7">
+                                Account corrente non trovato.
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+
+            <form
+                class="current-password-form"
+                method="post"
+                action="/admin/users/current/password"
+            >
+                <h3>Cambio password</h3>
+
+                <div>
+                    <label for="current_password">Password attuale</label>
+                    <input
+                        id="current_password"
+                        name="current_password"
+                        type="password"
+                        required
+                    >
+                </div>
+
+                <div>
+                    <label for="new_password">Nuova password</label>
+                    <input
+                        id="new_password"
+                        name="new_password"
+                        type="password"
+                        minlength="6"
+                        required
+                    >
+                </div>
+
+                <div>
+                    <label for="confirm_password">Conferma password</label>
+                    <input
+                        id="confirm_password"
+                        name="confirm_password"
+                        type="password"
+                        minlength="6"
+                        required
+                    >
+                </div>
+
+                <button type="submit">Cambia password</button>
+            </form>
+        </section>
+
+        {% if is_subadmin %}
+            <section id="registrationRequestsPanel" class="panel">
+                <div class="panel-title-row">
+                    <div>
+                        <h2>Richieste registrazione</h2>
+                        <p class="scope-note">
+                            Richieste inviate dagli utenti per {{ current_user.department }} / {{ current_user.city }}.
+                        </p>
+                    </div>
+                    <button
+                        id="refreshRegistrationRequests"
+                        class="icon-refresh"
+                        type="button"
+                        aria-label="Aggiorna richieste registrazione"
+                        title="Aggiorna richieste"
+                    >
+                        ↻
+                    </button>
+                </div>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Username</th>
+                            <th>Dipartimento</th>
+                            <th>Città</th>
+                            <th>Data richiesta</th>
+                            <th>Azioni</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if pending_requests %}
+                            {% for registration in pending_requests %}
+                                <tr>
+                                    <td>{{ registration.id }}</td>
+                                    <td>{{ registration.username }}</td>
+                                    <td>{{ registration.department }}</td>
+                                    <td>{{ registration.city }}</td>
+                                    <td>{{ registration.requested_at.replace("T", " ") }}</td>
+                                    <td>
+                                        <div class="inline-actions">
+                                            <form
+                                                class="registration-action-form"
+                                                method="post"
+                                                action="/admin/registration-requests/{{ registration.id }}/accept"
+                                            >
+                                                <button type="submit">Accetta</button>
+                                            </form>
+                                            <form
+                                                class="registration-action-form"
+                                                method="post"
+                                                action="/admin/registration-requests/{{ registration.id }}/reject"
+                                            >
+                                                <button class="danger" type="submit">Rifiuta</button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td class="empty-row" colspan="6">
+                                    Nessuna richiesta in attesa.
+                                </td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </section>
+        {% endif %}
+
+        <section class="panel">
+            <div id="managedAccountsPanel">
+                <div class="panel-title-row">
+                    <h2>{{ "Account gestiti" if is_global_admin else "Utenti gestiti" }}</h2>
+
+                    {% if is_global_admin %}
+                        <form class="filter-inline" method="get" action="/admin/users">
+                            <label class="sr-only" for="department_filter">Dipartimento</label>
+                            <select id="department_filter" name="department">
+                                <option value="">Tutti i dipartimenti</option>
+                                {% for department in departments %}
+                                    <option
+                                        value="{{ department }}"
+                                        {{ "selected" if department == selected_department else "" }}
+                                    >
+                                        {{ department }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <label class="sr-only" for="city_filter">Città</label>
+                            <select id="city_filter" name="city">
+                                <option value="">Tutte le città</option>
+                                {% for city in cities %}
+                                    <option
+                                        value="{{ city }}"
+                                        {{ "selected" if city == selected_city else "" }}
+                                    >
+                                        {{ city }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <button type="submit">Filtra</button>
+                            <a class="button-link secondary" href="/admin/users">Reset</a>
+                        </form>
+                    {% endif %}
+                </div>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Username</th>
+                            <th>Ruolo</th>
+                            <th>Dipartimento</th>
+                            <th>Città</th>
+                            <th>Stato</th>
+                            <th>Creato</th>
+                            <th>Azioni</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if users %}
+                            {% for account in users %}
+                            <tr>
+                                <td>{{ account.id }}</td>
+                                <td>{{ account.username }}</td>
+                                <td>{{ role_labels.get(account.role, account.role) }}</td>
+                                <td>{{ account.department or "-" }}</td>
+                                <td>{{ account.city or "-" }}</td>
+                                <td>{{ "Attivo" if account.active else "Disattivo" }}</td>
+                                <td>{{ account.created_at.replace("T", " ") }}</td>
+                                <td>
+                                    <div class="row-actions">
+                                        <form method="post" action="/admin/users/{{ account.id }}/toggle">
+                                            {% if account.active %}
+                                                <button class="danger" type="submit">
+                                                    Disattiva
+                                                </button>
+                                            {% else %}
+                                                <button type="submit">Attiva</button>
+                                            {% endif %}
+                                        </form>
+
+                                        {% if is_global_admin %}
+                                            <form
+                                                class="password-form"
+                                                method="post"
+                                                action="/admin/users/{{ account.id }}/password"
+                                            >
+                                                <input
+                                                    name="password"
+                                                    type="password"
+                                                    minlength="6"
+                                                    placeholder="Nuova password"
+                                                    required
+                                                >
+                                                <button class="secondary" type="submit">Reset</button>
+                                            </form>
+
+                                            <form
+                                                method="post"
+                                                action="/admin/users/{{ account.id }}/delete"
+                                                onsubmit="return confirm('Eliminare questo account? Le missioni resteranno nello storico come non assegnate.') && confirm('Conferma eliminazione definitiva dell account.');"
+                                            >
+                                                <button class="danger" type="submit">
+                                                    Elimina account
+                                                </button>
+                                            </form>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td class="empty-row" colspan="8">
+                                    Nessun account presente per questo ambito.
+                                </td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% if is_global_admin %}
+                <div class="subsection">
+                    <h2>Dipartimenti</h2>
+
+                    <form class="create-grid" method="post" action="/admin/units">
+                        <div>
+                            <label for="department">Dipartimento</label>
+                            <input id="department" name="department" maxlength="80" required>
+                        </div>
+
+                        <div>
+                            <label for="city">Città</label>
+                            <input id="city" name="city" maxlength="80" required>
+                        </div>
+
+                        <div>
+                            <label for="username">Username subadmin</label>
+                            <input
+                                id="username"
+                                name="username"
+                                pattern="[A-Za-z0-9_-]{3,32}"
+                                required
+                            >
+                        </div>
+
+                        <div>
+                            <label for="password">Password subadmin</label>
+                            <input id="password" name="password" type="password" minlength="6" required>
+                        </div>
+
+                        <button type="submit">Crea</button>
+                    </form>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Dipartimento</th>
+                                <th>Città</th>
+                                <th>Subadmin</th>
+                                <th>Stato subadmin</th>
+                                <th>Creato</th>
+                                <th>Azioni</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if units %}
+                                {% for unit in units %}
+                                    <tr>
+                                        <td>{{ unit.id }}</td>
+                                        <td>{{ unit.department }}</td>
+                                        <td>{{ unit.city }}</td>
+                                        <td>#{{ unit.subadmin_id }} · {{ unit.subadmin_username }}</td>
+                                        <td>{{ "Attivo" if unit.subadmin_active else "Disattivo" }}</td>
+                                        <td>{{ unit.created_at.replace("T", " ") }}</td>
+                                        <td>
+                                            <form
+                                                method="post"
+                                                action="/admin/units/{{ unit.id }}/delete"
+                                                onsubmit="return confirm('Eliminare questo dipartimento/città e il relativo subadmin?') && confirm('Conferma eliminazione definitiva del dipartimento.');"
+                                            >
+                                                <button class="danger" type="submit">
+                                                    Elimina dipartimento
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td class="empty-row" colspan="7">
+                                        Nessun dipartimento/città configurato.
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+        </section>
+    </main>
+
+    {% if is_subadmin %}
+        <script>
+            (function () {
+                let isRefreshing = false;
+
+                function getRefreshButton() {
+                    return document.getElementById("refreshRegistrationRequests");
+                }
+
+                function setRefreshing(active) {
+                    isRefreshing = active;
+                    const button = getRefreshButton();
+
+                    if (!button) {
+                        return;
+                    }
+
+                    button.disabled = active;
+                    button.classList.toggle("loading", active);
+                }
+
+                async function replaceManagedSections(response) {
+                    const html = await response.text();
+                    const parser = new DOMParser();
+                    const documentFragment = parser.parseFromString(html, "text/html");
+
+                    ["registrationRequestsPanel", "managedAccountsPanel"].forEach(function (id) {
+                        const current = document.getElementById(id);
+                        const updated = documentFragment.getElementById(id);
+
+                        if (current && updated) {
+                            current.replaceWith(updated);
+                        }
+                    });
+
+                    bindSubadminActions();
+                }
+
+                async function refreshSubadminSections() {
+                    if (isRefreshing) {
+                        return;
+                    }
+
+                    setRefreshing(true);
+
+                    try {
+                        const response = await fetch(window.location.href, {
+                            credentials: "same-origin"
+                        });
+
+                        if (response.ok) {
+                            await replaceManagedSections(response);
+                        }
+                    } finally {
+                        setRefreshing(false);
+                    }
+                }
+
+                function bindSubadminActions() {
+                    const refreshButton = getRefreshButton();
+
+                    if (refreshButton) {
+                        refreshButton.addEventListener("click", refreshSubadminSections);
+                    }
+
+                    document
+                        .querySelectorAll(".registration-action-form")
+                        .forEach(function (form) {
+                            form.addEventListener("submit", async function (event) {
+                                event.preventDefault();
+
+                                if (isRefreshing) {
+                                    return;
+                                }
+
+                                setRefreshing(true);
+
+                                try {
+                                    const response = await fetch(form.action, {
+                                        method: "POST",
+                                        credentials: "same-origin"
+                                    });
+
+                                    if (response.ok) {
+                                        await replaceManagedSections(response);
+                                    } else {
+                                        window.location.reload();
+                                    }
+                                } finally {
+                                    setRefreshing(false);
+                                }
+                            });
+                        });
+                }
+
+                bindSubadminActions();
+            })();
+        </script>
+    {% endif %}
+</body>
+</html>

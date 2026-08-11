@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Account - Spot Mapping App</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+            background: #edf2ee;
+            color: #17211d;
+        }
+
+        header {
+            padding: 20px 28px;
+            color: white;
+            background: linear-gradient(135deg, #123126, #245c47);
+        }
+
+        header h1 {
+            margin: 0 0 6px;
+            font-size: 30px;
+            line-height: 1.08;
+        }
+
+        header p {
+            margin: 0;
+            color: rgba(255, 255, 255, 0.78);
+        }
+
+        main {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 22px;
+        }
+
+        a {
+            color: #1e3a2d;
+            font-weight: 850;
+            text-decoration: none;
+        }
+
+        .top-actions {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .panel {
+            padding: 16px;
+            border: 1px solid #d9e2dc;
+            border-radius: 12px;
+            background: white;
+            box-shadow: 0 8px 25px rgba(23, 63, 50, 0.08);
+        }
+
+        .panel h2 {
+            margin: 0 0 14px;
+            font-size: 26px;
+            line-height: 1.1;
+        }
+
+        label {
+            display: block;
+            margin: 12px 0 5px;
+            font-size: 13px;
+            font-weight: 850;
+            color: #244b3b;
+        }
+
+        input {
+            width: 100%;
+            min-height: 42px;
+            padding: 8px 10px;
+            border: 1px solid #cfd9d3;
+            border-radius: 8px;
+            font-size: 15px;
+        }
+
+        .account-meta {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        .meta-item {
+            padding: 10px;
+            border: 1px solid #d9e2dc;
+            border-radius: 8px;
+            background: #f7faf8;
+        }
+
+        .meta-item strong {
+            display: block;
+            margin-bottom: 4px;
+            color: #476356;
+            font-size: 12px;
+        }
+
+        button {
+            min-height: 42px;
+            margin-top: 14px;
+            border: 0;
+            border-radius: 8px;
+            padding: 8px 12px;
+            color: white;
+            background: #2f8a68;
+            font-weight: 850;
+            cursor: pointer;
+        }
+
+        button.secondary {
+            margin-top: 0;
+            color: #244b3b;
+            background: #e8f1eb;
+        }
+
+        .notice {
+            margin-bottom: 14px;
+            padding: 12px;
+            border-radius: 10px;
+        }
+
+        .notice.error {
+            color: #8f2f2f;
+            background: #fff1f1;
+            border: 1px solid #e6b8b8;
+        }
+
+        .notice.success {
+            color: #20523d;
+            background: #eff8f2;
+            border: 1px solid #cfe3d4;
+        }
+
+        @media (max-width: 760px) {
+            header {
+                padding: 18px 22px;
+            }
+
+            header h1 {
+                font-size: 28px;
+            }
+
+            main {
+                padding: 16px 14px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>Account</h1>
+        <p>Gestione password e profilo.</p>
+    </header>
+
+    <main>
+        <div class="top-actions">
+            <a href="/">← Torna alla mappa</a>
+            <form method="post" action="/logout">
+                <button class="secondary" type="submit">Esci</button>
+            </form>
+        </div>
+
+        {% if error %}
+            <div class="notice error">{{ error }}</div>
+        {% endif %}
+
+        {% if success %}
+            <div class="notice success">{{ success }}</div>
+        {% endif %}
+
+        <section class="panel">
+            <h2>{{ current_user.username }}</h2>
+            <div class="account-meta">
+                <div class="meta-item">
+                    <strong>ID</strong>
+                    #{{ current_user.id }}
+                </div>
+                <div class="meta-item">
+                    <strong>Ruolo</strong>
+                    {{ current_user.role }}
+                </div>
+                <div class="meta-item">
+                    <strong>Dipartimento</strong>
+                    {{ current_user.department or "-" }}
+                </div>
+                <div class="meta-item">
+                    <strong>Città</strong>
+                    {{ current_user.city or "-" }}
+                </div>
+            </div>
+            <form method="post" action="/account/password">
+                <label for="current_password">Password attuale</label>
+                <input id="current_password" name="current_password" type="password" required>
+
+                <label for="new_password">Nuova password</label>
+                <input id="new_password" name="new_password" type="password" minlength="6" required>
+
+                <label for="confirm_password">Conferma nuova password</label>
+                <input id="confirm_password" name="confirm_password" type="password" minlength="6" required>
+
+                <button type="submit">Aggiorna password</button>
+            </form>
+        </section>
+    </main>
+</body>
+</html>

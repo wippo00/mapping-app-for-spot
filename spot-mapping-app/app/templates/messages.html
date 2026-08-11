@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Messaggi Spot</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family:
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                Roboto,
+                Arial,
+                sans-serif;
+            background: #edf2ee;
+            color: #17211d;
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+        }
+
+        header {
+            padding: 18px;
+            color: white;
+            background: linear-gradient(135deg, #123126, #245c47);
+        }
+
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 21px;
+        }
+
+        header p {
+            margin: 4px 0 0;
+            color: rgba(255,255,255,0.8);
+            font-size: 13px;
+        }
+
+        .account-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+
+        .settings-link,
+        .logout-form button {
+            border: 0;
+            border-radius: 999px;
+            min-height: 34px;
+            color: #e7fff0;
+            background: rgba(12, 26, 20, 0.28);
+            font-size: 12px;
+            font-weight: 750;
+            text-decoration: none;
+        }
+
+        .settings-link {
+            max-width: 110px;
+            padding: 0 12px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            line-height: 1;
+        }
+
+        .logout-form {
+            margin: 0;
+        }
+
+        .logout-form button {
+            padding: 0 12px;
+            cursor: pointer;
+        }
+
+        main {
+            padding: 14px;
+            padding-bottom: calc(88px + env(safe-area-inset-bottom));
+        }
+
+        .status-card,
+        .message-card {
+            margin-bottom: 10px;
+            padding: 13px;
+            border-radius: 14px;
+            background: white;
+            border: 1px solid #d9e2dc;
+        }
+
+        .message-card.warning {
+            border-left: 5px solid #d97706;
+        }
+
+        .message-card.info {
+            border-left: 5px solid #2563eb;
+        }
+
+        .message-card strong {
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .message-card small {
+            color: #68766f;
+        }
+
+        .bottom-bar {
+            position: fixed;
+            z-index: 5000;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
+            background: rgba(255, 255, 255, 0.98);
+            border-top: 1px solid #d9e2dc;
+            box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.16);
+        }
+
+        .bottom-bar button {
+            min-width: 0;
+            min-height: 56px;
+            padding: 9px 10px;
+            border: 0;
+            border-radius: 12px;
+            font-family: inherit;
+            font-size: 11px;
+            line-height: 1.1;
+            color: #244b3b;
+            background: #e8f1eb;
+            font-weight: 750;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+
+        .bottom-bar button:active {
+            transform: scale(0.98);
+        }
+
+        #actionButton.start {
+            color: white;
+            background: linear-gradient(135deg, #1d6b4c, #338d69);
+        }
+
+        #actionButton.abort {
+            color: white;
+            background: linear-gradient(135deg, #b23b3b, #dc5a4f);
+        }
+    </style>
+</head>
+
+<body data-user-id="{{ current_user.id }}">
+    <header>
+        <div class="header-row">
+            <div>
+                <h1>Messaggi Spot</h1>
+                <p>Telemetria e avvisi della missione simulata</p>
+            </div>
+
+            <div class="account-actions">
+                <a
+                    class="settings-link"
+                    href="{{ '/admin/users' if current_user.role in ['admin', 'subadmin'] else '/account' }}"
+                    aria-label="Account {{ current_user.username }}"
+                    title="{{ current_user.username }}"
+                >
+                    {{ current_user.username }}
+                </a>
+                <form class="logout-form" method="post" action="/logout">
+                    <button type="submit">Esci</button>
+                </form>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div id="status" class="status-card">
+            Caricamento messaggi...
+        </div>
+
+        <section id="messagesList"></section>
+    </main>
+
+    <nav class="bottom-bar">
+        <button onclick="window.location.href='/'">Home</button>
+        <button id="actionButton" class="start">Inizia</button>
+        <button onclick="window.location.href='/history'">Storico</button>
+    </nav>
+
+    <script>
+        const status = document.getElementById("status");
+        const messagesList = document.getElementById("messagesList");
+        const actionButton = document.getElementById("actionButton");
+        const currentUserId = document.body.dataset.userId || "guest";
+        const currentMissionStorageKey = `currentMissionId:${currentUserId}`;
+        localStorage.removeItem("currentMissionId");
+
+        function currentMissionId() {
+            return Number(localStorage.getItem(currentMissionStorageKey));
+        }
+
+        function clearCurrentMission() {
+            localStorage.removeItem(currentMissionStorageKey);
+        }
+
+        function missionCanBeAborted(statusValue) {
+            return statusValue === "INVIATA";
+        }
+
+        function updateActionButton() {
+            const missionId = currentMissionId();
+
+            if (missionId) {
+                actionButton.textContent = "Abort";
+                actionButton.classList.remove("start");
+                actionButton.classList.add("abort");
+            } else {
+                actionButton.textContent = "Inizia";
+                actionButton.classList.remove("abort");
+                actionButton.classList.add("start");
+            }
+        }
+
+        function escapeHtml(value) {
+            return String(value)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        function formatDuration(seconds) {
+            if (!seconds || seconds < 60) {
+                return `${seconds || 0} s`;
+            }
+
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = seconds % 60;
+
+            if (remainingSeconds === 0) {
+                return `${minutes} min`;
+            }
+
+            return `${minutes} min ${remainingSeconds} s`;
+        }
+
+        function formatProgressSummary(progress) {
+            if (!progress) {
+                return "Progresso non disponibile";
+            }
+
+            if (progress.status !== "INVIATA") {
+                return progress.status_label;
+            }
+
+            return `Tempo restante stimato: ${formatDuration(progress.estimated_remaining_seconds)}`;
+        }
+
+        async function validateCurrentMission() {
+            const missionId = currentMissionId();
+
+            if (!missionId) {
+                return null;
+            }
+
+            const response = await fetch(`/missions/${missionId}`);
+
+            if (response.status === 401) {
+                window.location.href = "/login?next=/messages";
+                return null;
+            }
+
+            if (!response.ok) {
+                clearCurrentMission();
+                return null;
+            }
+
+            const mission = await response.json();
+
+            if (missionCanBeAborted(mission.status)) {
+                return missionId;
+            }
+
+            if (mission.status === "RIENTRO_BASE") {
+                await fetch(`/missions/${missionId}/messages/return-complete`, {
+                    method: "POST"
+                });
+            }
+
+            clearCurrentMission();
+            return null;
+        }
+
+        async function simulateMissionActivity(missionId) {
+            const response = await fetch(
+                `/missions/${missionId}/messages/simulate`,
+                {
+                    method: "POST"
+                }
+            );
+
+            if (response.status === 401) {
+                window.location.href = "/login?next=/messages";
+                return null;
+            }
+
+            if (!response.ok) {
+                return null;
+            }
+
+            return response.json();
+        }
+
+        async function loadMissionProgress(missionId) {
+            const response = await fetch(`/missions/${missionId}/progress`);
+
+            if (!response.ok) {
+                return null;
+            }
+
+            return response.json();
+        }
+
+        async function loadMessages() {
+            const missionId = await validateCurrentMission();
+
+            if (!missionId) {
+                status.textContent = "Nessuna missione attiva.";
+                messagesList.innerHTML = "";
+                updateActionButton();
+                return;
+            }
+
+            const simulatedMessage = await simulateMissionActivity(missionId);
+            const completed =
+                simulatedMessage && simulatedMessage.status === "COMPLETATA";
+
+            const response = await fetch(`/missions/${missionId}/messages`);
+
+            if (response.status === 401) {
+                window.location.href = "/login?next=/messages";
+                return;
+            }
+
+            if (!response.ok) {
+                status.textContent = "Impossibile caricare i messaggi.";
+                return;
+            }
+
+            const messages = await response.json();
+            const progress = completed
+                ? simulatedMessage
+                : await loadMissionProgress(missionId);
+
+            status.textContent = completed
+                ? `Missione #${missionId} completata.`
+                : `Missione #${missionId}: ${formatProgressSummary(progress)}.`;
+
+            messagesList.innerHTML = messages.map(function(message) {
+                const type = message.level === "WARNING" ? "warning" : "info";
+
+                return `
+                    <article class="message-card ${type}">
+                        <strong>${escapeHtml(message.level)}</strong>
+                        <small>${escapeHtml(message.created_at.replace("T", " "))}</small>
+                        <p>${escapeHtml(message.text)}</p>
+                    </article>
+                `;
+            }).join("");
+
+            if (completed) {
+                clearCurrentMission();
+            }
+
+            updateActionButton();
+        }
+
+        async function abortMission(missionId) {
+            const confirmed = confirm(
+                `Vuoi abortire la missione #${missionId}?`
+            );
+
+            if (!confirmed) {
+                return;
+            }
+
+            status.textContent = `Abort della missione #${missionId} in corso...`;
+
+            const response = await fetch(`/missions/${missionId}/abort`, {
+                method: "POST"
+            });
+
+            if (!response.ok) {
+                status.textContent = "Impossibile abortire la missione.";
+                return;
+            }
+
+            const result = await response.json();
+
+            await fetch(`/missions/${result.mission_id}/messages/abort-start`, {
+                method: "POST"
+            });
+
+            await loadMessages();
+
+            setTimeout(async function () {
+                const returnResponse = await fetch(
+                    `/missions/${result.mission_id}/messages/return-complete`,
+                    {
+                        method: "POST"
+                    }
+                );
+
+                if (returnResponse.ok) {
+                    clearCurrentMission();
+                    await loadMessages();
+                }
+            }, 4000);
+        }
+
+        actionButton.addEventListener("click", async function() {
+            const missionId = await validateCurrentMission();
+
+            if (!missionId) {
+                updateActionButton();
+                window.location.href = "/";
+                return;
+            }
+
+            abortMission(missionId);
+        });
+
+        loadMessages();
+        setInterval(loadMessages, 5000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Registrazione - Spot Mapping App</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            margin: 0;
+            display: grid;
+            place-items: center;
+            padding: 18px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+            background: #edf2ee;
+            color: #17211d;
+        }
+
+        .register-card {
+            width: min(480px, 100%);
+            padding: 26px;
+            border: 1px solid #d9e2dc;
+            border-radius: 16px;
+            background: white;
+            box-shadow: 0 8px 25px rgba(23, 63, 50, 0.10);
+        }
+
+        h1 {
+            margin: 0;
+            color: #173f32;
+            font-size: 28px;
+        }
+
+        p {
+            margin: 8px 0 20px;
+            color: #64726b;
+        }
+
+        label {
+            display: block;
+            margin: 14px 0 6px;
+            font-weight: 800;
+        }
+
+        input,
+        select {
+            width: 100%;
+            min-height: 46px;
+            padding: 10px 12px;
+            border: 1px solid #cfd9d3;
+            border-radius: 10px;
+            font-size: 16px;
+        }
+
+        button {
+            width: 100%;
+            min-height: 48px;
+            margin-top: 18px;
+            border: 0;
+            border-radius: 12px;
+            color: white;
+            background: linear-gradient(135deg, #1d6b4c, #338d69);
+            font-size: 16px;
+            font-weight: 850;
+            cursor: pointer;
+        }
+
+        button:disabled {
+            cursor: not-allowed;
+            opacity: 0.55;
+        }
+
+        .notice {
+            margin: 0 0 16px;
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 14px;
+        }
+
+        .notice.error {
+            color: #8f2f2f;
+            background: #fff1f1;
+            border: 1px solid #e6b8b8;
+        }
+
+        .notice.success {
+            color: #20523d;
+            background: #eff8f2;
+            border: 1px solid #cfe3d4;
+        }
+
+        .login-link {
+            display: block;
+            margin-top: 16px;
+            color: #1e3a2d;
+            font-weight: 850;
+            text-align: center;
+            text-decoration: none;
+        }
+    </style>
+</head>
+
+<body>
+    <main class="register-card">
+        <h1>Registrazione</h1>
+        <p>Invia una richiesta al subadmin del dipartimento e città scelti.</p>
+
+        {% if error %}
+            <div class="notice error">{{ error }}</div>
+        {% endif %}
+
+        {% if success %}
+            <div class="notice success">{{ success }}</div>
+        {% endif %}
+
+        <form method="post" action="/register">
+            <label for="username">Username</label>
+            <input
+                id="username"
+                name="username"
+                pattern="[A-Za-z0-9_-]{3,32}"
+                autocomplete="username"
+                required
+            >
+
+            <label for="password">Password</label>
+            <input
+                id="password"
+                name="password"
+                type="password"
+                minlength="6"
+                autocomplete="new-password"
+                required
+            >
+
+            <label for="confirm_password">Conferma password</label>
+            <input
+                id="confirm_password"
+                name="confirm_password"
+                type="password"
+                minlength="6"
+                autocomplete="new-password"
+                required
+            >
+
+            <label for="unit_id">Dipartimento e città</label>
+            <select id="unit_id" name="unit_id" required>
+                {% for unit in units %}
+                    <option value="{{ unit.id }}">
+                        {{ unit.department }} / {{ unit.city }}
+                    </option>
+                {% endfor %}
+            </select>
+
+            <button type="submit" {{ "disabled" if not units else "" }}>
+                Invia richiesta
+            </button>
+        </form>
+
+        <a class="login-link" href="/login">Hai già un account? Accedi</a>
+    </main>
+</body>
+</html>

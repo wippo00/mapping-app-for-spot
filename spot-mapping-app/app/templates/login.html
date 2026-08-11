@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Login - Spot Mapping App</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            margin: 0;
+            display: grid;
+            place-items: center;
+            padding: 18px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+            background: #edf2ee;
+            color: #17211d;
+        }
+
+        .login-card {
+            width: min(430px, 100%);
+            padding: 26px;
+            border: 1px solid #d9e2dc;
+            border-radius: 16px;
+            background: white;
+            box-shadow: 0 8px 25px rgba(23, 63, 50, 0.10);
+        }
+
+        h1 {
+            margin: 0;
+            color: #173f32;
+            font-size: 28px;
+        }
+
+        p {
+            margin: 8px 0 20px;
+            color: #64726b;
+        }
+
+        label {
+            display: block;
+            margin: 14px 0 6px;
+            font-weight: 800;
+        }
+
+        input {
+            width: 100%;
+            min-height: 46px;
+            padding: 10px 12px;
+            border: 1px solid #cfd9d3;
+            border-radius: 10px;
+            font-size: 16px;
+        }
+
+        button {
+            width: 100%;
+            min-height: 48px;
+            margin-top: 18px;
+            border: 0;
+            border-radius: 12px;
+            color: white;
+            background: linear-gradient(135deg, #1d6b4c, #338d69);
+            font-size: 16px;
+            font-weight: 850;
+            cursor: pointer;
+        }
+
+        .register-link {
+            display: block;
+            margin-top: 16px;
+            color: #1e3a2d;
+            font-weight: 850;
+            text-align: center;
+            text-decoration: none;
+        }
+
+        .error {
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 14px;
+        }
+
+        .error {
+            margin: 0 0 16px;
+            color: #8f2f2f;
+            background: #fff1f1;
+            border: 1px solid #e6b8b8;
+        }
+    </style>
+</head>
+
+<body>
+    <main class="login-card">
+        <h1>Spot Mapping</h1>
+        <p>Accedi alla tua area di lavoro.</p>
+
+        {% if error %}
+            <div class="error">{{ error }}</div>
+        {% endif %}
+
+        <form method="post" action="/login">
+            <input type="hidden" name="next_path" value="{{ next_path }}">
+
+            <label for="username">Username</label>
+            <input id="username" name="username" autocomplete="username" required>
+
+            <label for="password">Password</label>
+            <input
+                id="password"
+                name="password"
+                type="password"
+                autocomplete="current-password"
+                required
+            >
+
+            <button type="submit">Entra</button>
+        </form>
+
+        <a class="register-link" href="/register">
+            Registrati come utente
+        </a>
+    </main>
+</body>
+</html>

@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Storico missioni - Spot Mapping App</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+            background: #f4f6f5;
+            color: #1f2933;
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+        }
+
+        header {
+            background: #1e3a2d;
+            color: white;
+            padding: 20px 30px;
+        }
+
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+        }
+
+        header h1 {
+            margin: 0 0 6px 0;
+            font-size: 30px;
+            line-height: 1.08;
+        }
+
+        header p {
+            margin: 0;
+            color: rgba(255, 255, 255, 0.78);
+            line-height: 1.35;
+        }
+
+        .account-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+
+        main {
+            padding: 24px;
+        }
+
+        a {
+            color: #1e3a2d;
+            font-weight: bold;
+            text-decoration: none;
+        }
+
+        .history-table {
+            width: 100%;
+            margin-top: 18px;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        .history-table th,
+        .history-table td {
+            border: 1px solid #d5ddd8;
+            padding: 10px;
+            text-align: left;
+            vertical-align: middle;
+        }
+
+        .history-table th {
+            background: #e5eee8;
+        }
+
+        button {
+            padding: 7px 10px;
+            cursor: pointer;
+        }
+
+        .settings-link,
+        .logout-form button {
+            border: 0;
+            border-radius: 999px;
+            min-height: 34px;
+            color: #e7fff0;
+            background: rgba(12, 26, 20, 0.28);
+            font-size: 12px;
+            font-weight: 750;
+            text-decoration: none;
+        }
+
+        .settings-link {
+            max-width: 120px;
+            padding: 0 12px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            line-height: 1;
+        }
+
+        .logout-form {
+            margin: 0;
+        }
+
+        .logout-form button {
+            padding: 0 12px;
+        }
+
+        .report-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 150px;
+            min-height: 38px;
+            padding: 0 14px;
+            border-radius: 9px;
+            background: #2f8a68;
+            color: white;
+            text-align: center;
+            font-weight: 850;
+        }
+
+        .admin-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 18px;
+            padding: 12px;
+            border: 1px solid #d5ddd8;
+            border-radius: 12px;
+            background: white;
+        }
+
+        .selection-actions {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        body.selection-mode .selection-actions {
+            display: inline-flex;
+        }
+
+        body.selection-mode #selectionModeButton {
+            display: none;
+        }
+
+        .select-button,
+        .select-all-button {
+            border: 0;
+            border-radius: 9px;
+            color: #244b3b;
+            background: #e8f1eb;
+            font-weight: 850;
+        }
+
+        .danger-button,
+        .delete-button {
+            border: 0;
+            border-radius: 9px;
+            color: white;
+            background: #be3c3c;
+            font-weight: 850;
+        }
+
+        .danger-button:disabled {
+            cursor: not-allowed;
+            opacity: 0.45;
+        }
+
+        .delete-button {
+            min-height: 36px;
+            padding: 0 12px;
+        }
+
+        .select-cell,
+        .actions-cell {
+            text-align: center;
+        }
+
+        .select-heading,
+        .select-cell {
+            display: none;
+        }
+
+        body.selection-mode .select-heading,
+        body.selection-mode .select-cell {
+            display: table-cell;
+        }
+
+        .mission-checkbox {
+            width: 18px;
+            height: 18px;
+            accent-color: #2f8a68;
+        }
+
+        @media (max-width: 760px) {
+            header {
+                padding: 16px;
+            }
+
+            .header-row {
+                align-items: center;
+            }
+
+            header h1 {
+                font-size: 22px;
+            }
+
+            header p {
+                display: none;
+            }
+
+            main {
+                padding: 14px;
+            }
+
+            .admin-toolbar {
+                align-items: stretch;
+                margin-top: 14px;
+                padding: 10px;
+            }
+
+            .admin-toolbar > * {
+                width: 100%;
+            }
+
+            .selection-actions {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 8px;
+            }
+
+            body.selection-mode .selection-actions {
+                display: grid;
+            }
+
+            .select-button,
+            .select-all-button {
+                min-height: 42px;
+            }
+
+            .danger-button {
+                min-height: 42px;
+            }
+
+            .history-table {
+                display: block;
+                margin-top: 14px;
+                background: transparent;
+                border-collapse: separate;
+            }
+
+            .history-table thead {
+                display: none;
+            }
+
+            .history-table tbody,
+            .history-table tr,
+            .history-table td {
+                display: block;
+                width: 100%;
+            }
+
+            .history-table tr {
+                margin-bottom: 12px;
+                overflow: hidden;
+                border: 1px solid #d5ddd8;
+                border-radius: 12px;
+                background: white;
+                box-shadow: 0 4px 14px rgba(30, 58, 45, 0.08);
+            }
+
+            .history-table td {
+                display: grid;
+                grid-template-columns: 112px minmax(0, 1fr);
+                align-items: center;
+                gap: 10px;
+                padding: 11px 13px;
+                border: 0;
+                border-bottom: 1px solid #e4ebe7;
+                font-size: 15px;
+                line-height: 1.3;
+            }
+
+            .history-table .select-cell {
+                display: none;
+            }
+
+            body.selection-mode .history-table .select-cell {
+                display: grid;
+            }
+
+            .history-table td:last-child {
+                border-bottom: 0;
+            }
+
+            .history-table td::before {
+                content: attr(data-label);
+                color: #476356;
+                font-weight: 850;
+            }
+
+            .history-table .empty-state {
+                display: block;
+                padding: 18px;
+                text-align: center;
+            }
+
+            .history-table .empty-state::before {
+                content: "";
+            }
+
+            .report-link {
+                width: auto;
+                justify-self: start;
+                min-width: 0;
+                min-height: 44px;
+                padding: 0 18px;
+                border-radius: 10px;
+                font-size: 16px;
+            }
+
+            .delete-button {
+                justify-self: start;
+                min-height: 40px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="header-row">
+            <div>
+                <h1>Storico missioni</h1>
+                <p>Missioni inviate al database simulando la comunicazione con Spot.</p>
+            </div>
+
+            <div class="account-actions">
+                <a
+                    class="settings-link"
+                    href="{{ '/admin/users' if current_user.role in ['admin', 'subadmin'] else '/account' }}"
+                    aria-label="Account {{ current_user.username }}"
+                    title="{{ current_user.username }}"
+                >
+                    {{ current_user.username }}
+                </a>
+                <form class="logout-form" method="post" action="/logout">
+                    <button type="submit">Esci</button>
+                </form>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <a href="/">← Torna alla mappa</a>
+
+        <div class="admin-toolbar">
+            <button id="selectionModeButton" class="select-button" type="button">
+                Seleziona
+            </button>
+            <div class="selection-actions">
+                <button id="selectAllButton" class="select-all-button" type="button">
+                    Seleziona tutto
+                </button>
+                <button id="deleteSelectedButton" class="danger-button" disabled>
+                    Elimina
+                </button>
+                <button id="cancelSelectionButton" class="select-all-button" type="button">
+                    Esci
+                </button>
+            </div>
+        </div>
+
+        <table class="history-table">
+            <thead>
+                <tr>
+                    <th class="select-heading">Sel.</th>
+                    <th>ID</th>
+                    <th>Nome</th>
+                    {% if current_user.role in ["admin", "subadmin"] %}
+                        <th>Account</th>
+                        <th>Dipartimento</th>
+                        <th>Città</th>
+                    {% endif %}
+                    <th>Data</th>
+                    <th>Area</th>
+                    <th>Celle</th>
+                    <th>Rotazione</th>
+                    <th>GPS robot</th>
+                    <th>Stato</th>
+                    <th>Resoconto</th>
+                    <th>Azioni</th>
+                </tr>
+            </thead>
+
+            <tbody id="missionsBody"></tbody>
+        </table>
+    </main>
+
+    <script>
+        const missionsBody = document.getElementById("missionsBody");
+        const currentRole = "{{ current_user.role }}";
+        const showOwnerColumns = currentRole === "admin" || currentRole === "subadmin";
+        const selectionModeButton = document.getElementById("selectionModeButton");
+        const selectAllButton = document.getElementById("selectAllButton");
+        const deleteSelectedButton = document.getElementById("deleteSelectedButton");
+        const cancelSelectionButton = document.getElementById("cancelSelectionButton");
+        const selectedMissionIds = new Set();
+        let selectionMode = false;
+
+        function escapeHtml(value) {
+            return String(value)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        function setSelectionMode(active) {
+            selectionMode = active;
+            document.body.classList.toggle("selection-mode", selectionMode);
+
+            if (!selectionMode) {
+                selectedMissionIds.clear();
+                document
+                    .querySelectorAll(".mission-checkbox")
+                    .forEach(function (checkbox) {
+                        checkbox.checked = false;
+                    });
+            }
+
+            updateSelectionControls();
+        }
+
+        function updateSelectionControls() {
+            const checkboxes = Array.from(
+                document.querySelectorAll(".mission-checkbox")
+            );
+            const selectedCount = selectedMissionIds.size;
+
+            deleteSelectedButton.disabled = selectedCount === 0;
+            selectAllButton.disabled = checkboxes.length === 0;
+        }
+
+        async function deleteMissionIds(missionIds, label) {
+            if (missionIds.length === 0) {
+                return;
+            }
+
+            const firstCheck = confirm(
+                `Eliminare ${label}? Verranno cancellati anche messaggi e comandi collegati.`
+            );
+
+            if (!firstCheck) {
+                return;
+            }
+
+            const secondCheck = confirm(
+                "Conferma eliminazione definitiva. L'operazione non è reversibile."
+            );
+
+            if (!secondCheck) {
+                return;
+            }
+
+            const response = missionIds.length === 1
+                ? await fetch(`/missions/${missionIds[0]}`, { method: "DELETE" })
+                : await fetch("/admin/missions/delete", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        mission_ids: missionIds
+                    })
+                });
+
+            if (response.status === 401) {
+                window.location.href = "/login?next=/history";
+                return;
+            }
+
+            if (response.status === 403) {
+                alert("Puoi eliminare solo le missioni consentite.");
+                return;
+            }
+
+            if (!response.ok) {
+                alert("Impossibile eliminare le missioni selezionate.");
+                return;
+            }
+
+            missionIds.forEach(function (missionId) {
+                selectedMissionIds.delete(missionId);
+            });
+
+            await loadMissions();
+            setSelectionMode(false);
+        }
+
+        async function loadMissions() {
+            const response = await fetch("/missions");
+
+            if (response.status === 401) {
+                window.location.href = "/login?next=/history";
+                return;
+            }
+
+            const missions = await response.json();
+            missionsBody.textContent = "";
+
+            selectedMissionIds.forEach(function (missionId) {
+                const stillVisible = missions.some(function (mission) {
+                    return mission.id === missionId;
+                });
+
+                if (!stillVisible) {
+                    selectedMissionIds.delete(missionId);
+                }
+            });
+
+            if (missions.length === 0) {
+                missionsBody.innerHTML =
+                    `<tr><td class="empty-state" colspan="${showOwnerColumns ? 14 : 11}">Nessuna missione salvata.</td></tr>`;
+                selectedMissionIds.clear();
+                updateSelectionControls();
+                return;
+            }
+
+            missions.forEach(function (mission) {
+                const row = document.createElement("tr");
+                const ownerCells = showOwnerColumns
+                    ? `
+                        <td data-label="Account">${escapeHtml(mission.username || "Non assegnato")}</td>
+                        <td data-label="Dipartimento">${escapeHtml(mission.department || "-")}</td>
+                        <td data-label="Città">${escapeHtml(mission.city || "-")}</td>
+                    `
+                    : "";
+                const selectCell = mission.can_delete
+                    ? `
+                        <td class="select-cell" data-label="Seleziona">
+                            <input
+                                class="mission-checkbox"
+                                type="checkbox"
+                                value="${mission.id}"
+                                ${selectedMissionIds.has(mission.id) ? "checked" : ""}
+                                aria-label="Seleziona missione ${mission.id}"
+                            >
+                        </td>
+                    `
+                    : `<td class="select-cell" data-label="Seleziona">-</td>`;
+                const actionsCell = mission.can_delete
+                    ? `
+                        <td class="actions-cell" data-label="Azioni">
+                            <button
+                                class="delete-button"
+                                type="button"
+                                data-delete-id="${mission.id}"
+                            >
+                                Elimina
+                            </button>
+                        </td>
+                    `
+                    : `<td class="actions-cell" data-label="Azioni">Solo visualizzazione</td>`;
+
+                row.innerHTML = `
+                    ${selectCell}
+                    <td data-label="ID">${mission.id}</td>
+                    <td data-label="Nome">${escapeHtml(mission.name || `Missione #${mission.id}`)}</td>
+                    ${ownerCells}
+                    <td data-label="Data">${escapeHtml(mission.created_at.replace("T", " "))}</td>
+                    <td data-label="Area">${mission.area_m2.toFixed(1)} m²</td>
+                    <td data-label="Celle">${mission.cell_size_m} m</td>
+                    <td data-label="Rotazione">${mission.grid_rotation_deg}°</td>
+                    <td data-label="GPS robot">
+                        ${mission.robot_latitude.toFixed(6)},
+                        ${mission.robot_longitude.toFixed(6)}
+                    </td>
+                    <td data-label="Stato">${escapeHtml(mission.status_label || mission.status)}</td>
+                    <td data-label="Resoconto">
+                        <a class="report-link" href="/mission/${mission.id}">Apri resoconto</a>
+                    </td>
+                    ${actionsCell}
+                `;
+
+                missionsBody.appendChild(row);
+            });
+
+            updateSelectionControls();
+        }
+
+        selectionModeButton.addEventListener("click", function () {
+            setSelectionMode(true);
+        });
+
+        selectAllButton.addEventListener("click", function () {
+            const checkboxes = Array.from(
+                document.querySelectorAll(".mission-checkbox")
+            );
+
+            checkboxes.forEach(function (checkbox) {
+                checkbox.checked = true;
+                const missionId = Number(checkbox.value);
+                selectedMissionIds.add(missionId);
+            });
+
+            updateSelectionControls();
+        });
+
+        deleteSelectedButton.addEventListener("click", function () {
+            const missionIds = Array.from(selectedMissionIds);
+            deleteMissionIds(
+                missionIds,
+                `${missionIds.length} mission${missionIds.length === 1 ? "e" : "i"}`
+            );
+        });
+
+        cancelSelectionButton.addEventListener("click", function () {
+            setSelectionMode(false);
+        });
+
+        missionsBody.addEventListener("change", function (event) {
+            if (!event.target.classList.contains("mission-checkbox")) {
+                return;
+            }
+
+            const missionId = Number(event.target.value);
+
+            if (event.target.checked) {
+                selectedMissionIds.add(missionId);
+            } else {
+                selectedMissionIds.delete(missionId);
+            }
+
+            updateSelectionControls();
+        });
+
+        missionsBody.addEventListener("click", function (event) {
+            const button = event.target.closest("[data-delete-id]");
+
+            if (!button) {
+                return;
+            }
+
+            const missionId = Number(button.dataset.deleteId);
+            deleteMissionIds([missionId], `la missione #${missionId}`);
+        });
+
+        loadMissions();
+    </script>
+</body>
+</html>
